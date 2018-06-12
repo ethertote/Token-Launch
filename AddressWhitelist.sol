@@ -1,5 +1,9 @@
 // Ethertote.com - optional customer whitelist contract - dev to discuss option
 
+// UPDATE 12.06.18 - We will opt for a full public crowdsale without a whitelist, so this functionality
+// will not longer be required
+
+
 // full credit for contract and functions goes to Bounty0x
 // github.com/bounty0x/Bounty0xCrowdsale/contracts/AddressWhitelist.sol
 
