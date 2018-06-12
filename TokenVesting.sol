@@ -1,5 +1,8 @@
 // Ethertote.com - contract template for gradual token release
 
+// UPDATE: 12.06.18 - We will most likely not opt for gradual token 
+// relase as part of the crowdsale, so this functionality will not be required
+
 // full credit for contract and functions goes to OpenZeppelin
 // github.com/OpenZeppelin/zeppelin-solidity/contracts/token/ERC20/TokenVesting.sol
 
