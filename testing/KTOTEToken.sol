@@ -1,3 +1,8 @@
+//      deployed on Kovan 14.06.18 - 0x682b78997d739fd08d4dd31bd5a05a7162b32f43
+//  https://kovan.etherscan.io/token/0x682b78997d739fd08d4dd31bd5a05a7162b32f43
+
+
+
 pragma solidity 0.4.24;
 
 // ----------------------------------------------------------------------------
