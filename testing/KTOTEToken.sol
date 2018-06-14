@@ -1,6 +1,10 @@
 //      deployed on Kovan 14.06.18 - 0x682b78997d739fd08d4dd31bd5a05a7162b32f43
 //  https://kovan.etherscan.io/token/0x682b78997d739fd08d4dd31bd5a05a7162b32f43
 
+// When the transfer function is called, we use "9000000000000000000000000"
+// Which represents 9,000,000 tokens (to 18 decimal places) which is 90% of the total
+// tokens minted
+
 
 
 pragma solidity 0.4.24;
