@@ -1,6 +1,7 @@
-// deployed on Kovan 14.06.18 = 0xa0d3fab9cf4e3291589eba5cfa27b722509f3845
-
 pragma solidity ^0.4.24;
+
+// Sending tokens to 0x0000000000000000000000000000000000000000 will effectively burn them as this is a
+// null address so can never be spent or traded
 
 // ----------------------------------------------------------------------------
 // Ethertote (Kovan) Crowdsale contract
@@ -13,11 +14,13 @@ pragma solidity ^0.4.24;
 // ----------------------------------------------------------------------------
 
 import "github.com/OpenZeppelin/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "github.com/ethertote/core/SafeMath.sol";
+import "github.com/OpenZeppelin/openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol";
+import "github.com/OpenZeppelin/openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 
 
  
-contract Crowdsale {
+contract Crowdsale is BurnableToken {
   using SafeMath for uint256;
 
   // The token being sold
@@ -34,6 +37,10 @@ contract Crowdsale {
 
   // Amount of wei raised
   uint256 public weiRaised;
+  
+  // starting time and closing time of Crowdsale
+  uint public openingTime;
+  uint public closingTime;
 
   /**
    * Event for token purchase logging
@@ -54,7 +61,7 @@ contract Crowdsale {
    * _wallet = Address where collected funds will be forwarded to
    * _token = Address of the original token contract being sold
    */
-  constructor(uint256 _rate, address _wallet, ERC20 _token) public {
+  constructor(uint256 _rate, address _wallet, ERC20 _token, uint _openingTime, uint _closingTime) public {
     require(_rate > 0);
     require(_wallet != address(0));
     require(_token != address(0));
@@ -62,7 +69,58 @@ contract Crowdsale {
     rate = _rate;
     wallet = _wallet;
     token = _token;
+    
+    openingTime = _openingTime;
+    closingTime = _closingTime;
+    
   }
+
+  // confirm if Crowdsale has finished
+  function CrowdsaleHasClosed() public view returns (bool) {
+    // solium-disable-next-line security/no-block-members
+    return block.timestamp > closingTime;
+  }
+
+   // The following function is only used during testing - 
+   // Will be disabled for official main-net crowdsale
+   function setOpeningTime(uint256 _openingTime) public {
+    openingTime = _openingTime;
+    closingTime = openingTime + 7 days;
+  }
+
+
+// /**
+//  * @dev Burns a specific amount of tokens.
+//  * @param _value The amount of token to be burned.
+//  */
+// function burn(uint256 _value) public {
+//     require(_value > 0);
+//     require(_value <= balances[msg.sender]);
+//     // no need to require value <= totalSupply, since that would imply the
+//     // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+//     address burner = msg.sender;
+//     balances[burner] = balances[burner].sub(_value);
+//     totalSupply = totalSupply.sub(_value);
+//     Burn(burner, _value);
+// }
+
+address public burnAddress = 0x0000000000000000000000000000000000000000;
+uint public tokenBalance = 
+
+  function burnTokens(
+    address _beneficiary,
+    uint256 _tokenAmount
+  )
+    public
+  {
+    token.transfer(_beneficiary, _tokenAmount);
+  }
+
+
+
+
+
 
   // -----------------------------------------
   // Crowdsale external interface
@@ -71,6 +129,7 @@ contract Crowdsale {
   /**
    * fallback function ***DO NOT OVERRIDE***
    */
+   
   function () external payable {
     buyTokens(msg.sender);
   }
@@ -80,6 +139,10 @@ contract Crowdsale {
    * _beneficiary = Address of the wallet performing the token purchase
    */
   function buyTokens(address _beneficiary) public payable {
+    
+    // check Crowdsale is open
+    require(openingTime >= block.timestamp);
+    require(block.timestamp < closingTime);
 
     uint256 weiAmount = msg.value;
     _preValidatePurchase(_beneficiary, weiAmount);
