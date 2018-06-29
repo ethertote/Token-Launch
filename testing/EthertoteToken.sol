@@ -1,21 +1,22 @@
 pragma solidity ^0.4.24;
 
+// 29.06.18
 
-// ----------------------------------------------------------------------------
-//
-// Ethertote token contract
-//
-// (contract was developed based on the 'MiniMeToken' - Jordi Baylina)
-//
-// Fully ERC20 Compliant token
-//
-// Name:            Ethertote Kovan
-// Symbol:          ETK5
-// Decimals:        0
-// Total supply:    10000000 (10 million tokens)
 
-// ----------------------------------------------------------------------------
-
+//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
+//
+//  Ethertote token contract
+//
+//  (contract was developed based on the 'MiniMeToken' - Jordi Baylina)
+//
+//  Fully ERC20 Compliant token
+//
+//  Name:            Ethertote Kovan
+//  Symbol:          ETK5
+//  Decimals:        0
+//  Total supply:    10000000 (10 million tokens)
+//
+//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
 
 
 // ----------------------------------------------------------------------------
@@ -55,7 +56,7 @@ contract Controlled {
 
 
 // ----------------------------------------------------------------------------
-// ApproveAndCallFallBack contract
+// ApproveAndCallFallBack
 // ----------------------------------------------------------------------------
 
 contract ApproveAndCallFallBack {
@@ -131,7 +132,7 @@ contract EthertoteToken is Controlled {
     // --------------------------------------------------------------------
     // set the following values prior to deployment
     // --------------------------------------------------------------------
-    //
+    
         name = "Ethertote Kovan";                           // Set the name
         symbol = "ETK5";                                    // Set the symbol
         decimals = 0;                                       // Set the decimals
@@ -180,6 +181,7 @@ contract EthertoteToken is Controlled {
     function transfer(address _to, uint256 _amount
     ) public returns (bool success) {
         require(transfersEnabled);
+        require(_to != address(this) );
         doTransfer(msg.sender, _to, _amount);
         return true;
     }
@@ -200,7 +202,9 @@ contract EthertoteToken is Controlled {
     // transferFrom
     function transferFrom(address _from, address _to, uint256 _amount
     ) public returns (bool success) {
-
+        
+        require(_to != address(this) );
+        
         if (msg.sender != controller) {
             require(transfersEnabled);
 
@@ -225,11 +229,10 @@ contract EthertoteToken is Controlled {
 
 // ----------------------------------------------------------------------------
 
-
     function doTransfer(address _from, address _to, uint _amount) internal {
 
            if (_amount == 0) {
-               emit Transfer(_from, _to, _amount);    // Follow the spec to louch the event when transfer 0
+               emit Transfer(_from, _to, _amount); 
                return;
            }
 
@@ -276,7 +279,7 @@ contract EthertoteToken is Controlled {
     
 // _spender is the address of the contract able to transfer the tokens
 // _amount is the amount of tokens to be approved for transfer
-// returns 'true' if the function call was successful
+// return 'true' if the function call was successful
 // ----------------------------------------------------------------------------    
     function approveAndCall(address _spender, uint256 _amount, bytes _extraData
     ) public returns (bool success) {
@@ -354,7 +357,6 @@ contract EthertoteToken is Controlled {
         emit Transfer(0, _owner, _totalSupply);
         return true;
     }
-
 
 
 // ----------------------------------------------------------------------------
@@ -459,6 +461,5 @@ contract EthertoteToken is Controlled {
         token.transfer(controller, balance);
         emit ClaimedTokens(_token, controller, balance);
     }
-
 
 }
