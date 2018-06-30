@@ -68,7 +68,7 @@ contract ApproveAndCallFallBack {
 // The main EthertoteToken contract, the default controller is the msg.sender
 // that deploys the contract
 // ----------------------------------------------------------------------------
-contract EthertoteToken is Controlled {
+contract Test234Token is Controlled {
 
     // Variables to ensure contract is conforming to ERC220
     string public name;                
@@ -101,7 +101,7 @@ contract EthertoteToken is Controlled {
     }
 
     // parentToken will be 0x0 for the token unless cloned
-    EthertoteToken public parentToken;
+    Test234Token public parentToken;
 
     // parentSnapShotBlock is the block number from the Parent Token which will
     // be 0x0 unless cloned
@@ -133,8 +133,8 @@ contract EthertoteToken is Controlled {
     // set the following values prior to deployment
     // --------------------------------------------------------------------
     
-        name = "Ethertote Kovan";                           // Set the name
-        symbol = "ETK5";                                    // Set the symbol
+        name = "Test234 Kovan";                           // Set the name
+        symbol = "TEST234";                                    // Set the symbol
         decimals = 0;                                       // Set the decimals
         _totalSupply = 10000000 * 10**uint(decimals);       // 10,000,000 tokens
         
@@ -456,7 +456,7 @@ contract EthertoteToken is Controlled {
             controller.transfer(address(this).balance);
             return;
         }
-        EthertoteToken token = EthertoteToken(_token);
+        Test234Token token = Test234Token(_token);
         uint balance = token.balanceOf(this);
         token.transfer(controller, balance);
         emit ClaimedTokens(_token, controller, balance);
