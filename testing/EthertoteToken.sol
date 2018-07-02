@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-// 29.06.18
+// 02.07.18
 
 
 //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
@@ -34,25 +34,25 @@ contract TokenController {
 // ----------------------------------------------------------------------------
 // Controlled contract ensures only the controller can call specific functions 
 // ----------------------------------------------------------------------------
-contract Controlled {
+// contract Controlled {
 
-    modifier onlyController { 
-        require(
-            msg.sender != controller
-            ); 
-            _; 
-    }
+//     modifier onlyController { 
+//         require(
+//             msg.sender != controller
+//             ); 
+//             _; 
+//     }
 
-    address public controller;
+//     address public controller;
 
-    constructor() public { 
-        controller = msg.sender;
-    }
+//     constructor() public { 
+//         controller = msg.sender;
+//     }
 
-    function changeController(address _newController) onlyController public {
-        controller = _newController;
-    }
-}
+//     function changeController(address _newController) onlyController public {
+//         controller = _newController;
+//     }
+// }
 
 
 // ----------------------------------------------------------------------------
@@ -68,7 +68,7 @@ contract ApproveAndCallFallBack {
 // The main EthertoteToken contract, the default controller is the msg.sender
 // that deploys the contract
 // ----------------------------------------------------------------------------
-contract Test234Token is Controlled {
+contract Test345Token {
 
     // Variables to ensure contract is conforming to ERC220
     string public name;                
@@ -81,8 +81,20 @@ contract Test234Token is Controlled {
     address public _owner;
     address public thisContractAddress;
     
+    address public controller;
+    
+    address public relinquishOwnershipAddress = 0x0000000000000000000000000000000000000000;
+    
     
     // Modifier to ensure generateTokens() is only ran once by the constructor
+    modifier onlyController { 
+        require(
+            msg.sender == controller
+            ); 
+            _; 
+    }
+    
+    
     modifier onlyContract { 
         require(
             address(this) == thisContractAddress
@@ -101,7 +113,7 @@ contract Test234Token is Controlled {
     }
 
     // parentToken will be 0x0 for the token unless cloned
-    Test234Token public parentToken;
+    Test345Token public parentToken;
 
     // parentSnapShotBlock is the block number from the Parent Token which will
     // be 0x0 unless cloned
@@ -129,12 +141,14 @@ contract Test234Token is Controlled {
 // ----------------------------------------------------------------------------
     constructor() public {
         
+        controller = msg.sender;
+        
     // --------------------------------------------------------------------
     // set the following values prior to deployment
     // --------------------------------------------------------------------
     
-        name = "Test234 Kovan";                           // Set the name
-        symbol = "TEST234";                                    // Set the symbol
+        name = "Test345 Kovan";                           // Set the name
+        symbol = "TEST345";                                    // Set the symbol
         decimals = 0;                                       // Set the decimals
         _totalSupply = 10000000 * 10**uint(decimals);       // 10,000,000 tokens
         
@@ -153,6 +167,9 @@ contract Test234Token is Controlled {
 
         // Now call the generateTokens function to create the tokens and send to owner
         generateTokens(_owner, _totalSupply);
+        
+        // finally reliquish ownership of the contract for security purposes
+        controller = relinquishOwnershipAddress;
     }
 
 
@@ -180,6 +197,7 @@ contract Test234Token is Controlled {
     // transfer //
     function transfer(address _to, uint256 _amount
     ) public returns (bool success) {
+        
         require(transfersEnabled);
         require(_to != address(this) );
         doTransfer(msg.sender, _to, _amount);
@@ -229,6 +247,10 @@ contract Test234Token is Controlled {
 
 // ----------------------------------------------------------------------------
 
+    function changeController(address _newController) onlyController public {
+        controller = _newController;
+    }
+    
     function doTransfer(address _from, address _to, uint _amount) internal {
 
            if (_amount == 0) {
@@ -347,7 +369,7 @@ contract Test234Token is Controlled {
 // modifier attached to the function
 // ----------------------------------------------------------------------------
     function generateTokens(address _owner, uint _totalSupply) 
-    public onlyContract returns (bool) {
+    private onlyContract returns (bool) {
         uint curTotalSupply = totalSupply();
         require(curTotalSupply + _totalSupply >= curTotalSupply); // Check for overflow
         uint previousBalanceTo = balanceOf(_owner);
@@ -363,7 +385,7 @@ contract Test234Token is Controlled {
 // Enable tokens transfers to allow tokens to be traded
 // ----------------------------------------------------------------------------
 
-    function enableTransfers(bool _transfersEnabled) public onlyController {
+    function enableTransfers(bool _transfersEnabled) private onlyController {
         transfersEnabled = _transfersEnabled;
     }
 
@@ -456,7 +478,7 @@ contract Test234Token is Controlled {
             controller.transfer(address(this).balance);
             return;
         }
-        Test234Token token = Test234Token(_token);
+        Test345Token token = Test345Token(_token);
         uint balance = token.balanceOf(this);
         token.transfer(controller, balance);
         emit ClaimedTokens(_token, controller, balance);
