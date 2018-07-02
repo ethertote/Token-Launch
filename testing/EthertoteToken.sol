@@ -7,12 +7,13 @@ pragma solidity ^0.4.24;
 //
 //  Ethertote token contract
 //
-//  (contract was developed based on the 'MiniMeToken' - Jordi Baylina)
+//  (parts of the token contract
+//  are based on the 'MiniMeToken' - Jordi Baylina)
 //
 //  Fully ERC20 Compliant token
 //
-//  Name:            Ethertote Kovan
-//  Symbol:          ETK5
+//  Name:            Ethertote
+//  Symbol:          TOTE
 //  Decimals:        0
 //  Total supply:    10000000 (10 million tokens)
 //
@@ -32,30 +33,6 @@ contract TokenController {
 
 
 // ----------------------------------------------------------------------------
-// Controlled contract ensures only the controller can call specific functions 
-// ----------------------------------------------------------------------------
-// contract Controlled {
-
-//     modifier onlyController { 
-//         require(
-//             msg.sender != controller
-//             ); 
-//             _; 
-//     }
-
-//     address public controller;
-
-//     constructor() public { 
-//         controller = msg.sender;
-//     }
-
-//     function changeController(address _newController) onlyController public {
-//         controller = _newController;
-//     }
-// }
-
-
-// ----------------------------------------------------------------------------
 // ApproveAndCallFallBack
 // ----------------------------------------------------------------------------
 
@@ -68,7 +45,7 @@ contract ApproveAndCallFallBack {
 // The main EthertoteToken contract, the default controller is the msg.sender
 // that deploys the contract
 // ----------------------------------------------------------------------------
-contract Test345Token {
+contract EthertoteToken {
 
     // Variables to ensure contract is conforming to ERC220
     string public name;                
@@ -80,6 +57,7 @@ contract Test345Token {
     string public version; 
     address public _owner;
     address public thisContractAddress;
+    address public EthertoteAdminAddress;
     
     address public controller;
     
@@ -102,6 +80,15 @@ contract Test345Token {
         ); 
         _; 
     }
+    
+    
+        modifier EthertoteAdmin { 
+        require(
+            msg.sender == EthertoteAdminAddress
+            
+        ); 
+        _; 
+    }
 
 
     // Checkpoint is the struct that attaches a block number to a
@@ -113,7 +100,7 @@ contract Test345Token {
     }
 
     // parentToken will be 0x0 for the token unless cloned
-    Test345Token public parentToken;
+    EthertoteToken public parentToken;
 
     // parentSnapShotBlock is the block number from the Parent Token which will
     // be 0x0 unless cloned
@@ -142,13 +129,14 @@ contract Test345Token {
     constructor() public {
         
         controller = msg.sender;
+        EthertoteAdminAddress = msg.sender;
         
     // --------------------------------------------------------------------
     // set the following values prior to deployment
     // --------------------------------------------------------------------
     
-        name = "Test345 Kovan";                           // Set the name
-        symbol = "TEST345";                                    // Set the symbol
+        name = "Ethertote";                           // Set the name
+        symbol = "TOTE";                                    // Set the symbol
         decimals = 0;                                       // Set the decimals
         _totalSupply = 10000000 * 10**uint(decimals);       // 10,000,000 tokens
         
@@ -165,10 +153,12 @@ contract Test345Token {
         creationBlock = block.number;                       // sets the genesis block
 
 
-        // Now call the generateTokens function to create the tokens and send to owner
+        // Now call the internal generateTokens function to create the tokens 
+        // and send them to owner
         generateTokens(_owner, _totalSupply);
         
-        // finally reliquish ownership of the contract for security purposes
+        // Now that the tokens have been generated, finally reliquish 
+        // ownership of the token contract for security purposes
         controller = relinquishOwnershipAddress;
     }
 
@@ -247,6 +237,7 @@ contract Test345Token {
 
 // ----------------------------------------------------------------------------
 
+    // once constructor assigns control to 0x0 the contract cannot be changed
     function changeController(address _newController) onlyController public {
         controller = _newController;
     }
@@ -473,12 +464,12 @@ contract Test345Token {
 // _token is the address of the token contract to recover
 //  can be set to 0 to extract eth
 // ----------------------------------------------------------------------------
-    function claimTokens(address _token) public onlyController {
+    function claimTokens(address _token) EthertoteAdmin public {
         if (_token == 0x0) {
             controller.transfer(address(this).balance);
             return;
         }
-        Test345Token token = Test345Token(_token);
+        EthertoteToken token = EthertoteToken(_token);
         uint balance = token.balanceOf(this);
         token.transfer(controller, balance);
         emit ClaimedTokens(_token, controller, balance);
