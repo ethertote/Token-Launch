@@ -55,14 +55,16 @@ contract Test777Token {
     
     // Addtional variables 
     string public version; 
-    address public _owner;
+    address public contractOwner;
     address public thisContractAddress;
     address public EthertoteAdminAddress;
     
     bool public tokenGenerationLock;            // ensure tokens can only be minted once
     
+    // the controller takes full control of the contract
     address public controller;
     
+    // null address which will be assigned as controller for security purposes
     address public relinquishOwnershipAddress = 0x0000000000000000000000000000000000000000;
     
     
@@ -102,11 +104,11 @@ contract Test777Token {
     }
 
     // parentToken will be 0x0 for the token unless cloned
-    Test777Token public parentToken;
+    Test777Token private parentToken;
 
     // parentSnapShotBlock is the block number from the Parent Token which will
     // be 0x0 unless cloned
-    uint public parentSnapShotBlock;
+    uint private parentSnapShotBlock;
 
     // creationBlock is the 'genesis' block number when contract is deployed
     uint public creationBlock;
@@ -148,7 +150,7 @@ contract Test777Token {
     //---------------------------------------------------------------------
 
         // Additional variables set by the constructor
-        _owner = msg.sender;
+        contractOwner = msg.sender;
         thisContractAddress = address(this);
 
         transfersEnabled = true;                            // allows tokens to be traded
@@ -158,7 +160,7 @@ contract Test777Token {
 
         // Now call the internal generateTokens function to create the tokens 
         // and send them to owner
-        generateTokens(_owner, _totalSupply);
+        generateTokens(contractOwner, _totalSupply);
         
         // Now that the tokens have been generated, finally reliquish 
         // ownership of the token contract for security purposes
@@ -248,7 +250,7 @@ contract Test777Token {
 // ----------------------------------------------------------------------------
 
     // once constructor assigns control to 0x0 the contract cannot be changed
-    function changeController(address _newController) onlyController public {
+    function changeController(address _newController) onlyController private {
         controller = _newController;
     }
     
@@ -373,11 +375,11 @@ contract Test777Token {
 // Can only be called once during the constructor as it has the onlyContract
 // modifier attached to the function
 // ----------------------------------------------------------------------------
-    function generateTokens(address _owner, uint _totalSupply) 
+    function generateTokens(address _owner, uint _theTotalSupply) 
     private onlyContract returns (bool) {
         require(tokenGenerationLock == false);
         uint curTotalSupply = totalSupply();
-        require(curTotalSupply + _totalSupply >= curTotalSupply); // Check for overflow
+        require(curTotalSupply + _theTotalSupply >= curTotalSupply); // Check for overflow
         uint previousBalanceTo = balanceOf(_owner);
         require(previousBalanceTo + _totalSupply >= previousBalanceTo); // Check for overflow
         updateValueAtNow(totalSupplyHistory, curTotalSupply + _totalSupply);
@@ -475,12 +477,12 @@ contract Test777Token {
         );
 
 // ----------------------------------------------------------------------------
-// This method can be used by the controller to extrac tother tokens accidentally 
+// This method can be used by the controller to extract other tokens accidentally 
 // sent to this contract.
 // _token is the address of the token contract to recover
 //  can be set to 0 to extract eth
 // ----------------------------------------------------------------------------
-    function claimTokens(address _token) EthertoteAdmin public {
+    function withdrawOtherTokens(address _token) EthertoteAdmin public {
         if (_token == 0x0) {
             controller.transfer(address(this).balance);
             return;
