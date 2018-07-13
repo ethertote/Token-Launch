@@ -1,5 +1,5 @@
 // Ethertote - Crowdsale Contract
-// 10.07.18
+// 13.07.18
 
 
 pragma solidity ^0.4.24;
@@ -11,7 +11,7 @@ import "github.com/OpenZeppelin/openzeppelin-solidity/contracts/math/SafeMath.so
 // Imported Token Contract functions
 // ----------------------------------------------------------------------------
 
-contract Test345Token {
+contract Test777Token {
     function thisContractAddress() public pure returns (address) {}
     function balanceOf(address) public pure returns (uint256) {}
     function transfer(address _to, uint _amount) public {}
@@ -22,11 +22,11 @@ contract Test345Token {
 // Main Contract
 // ----------------------------------------------------------------------------
 
-contract Crowdsale {
+contract TokenSale {
   using SafeMath for uint256;
   
 //   Test345Token public test345token;
-  Test345Token public token;
+  Test777Token public token;
 
   // Address of team where funds are collected
   // for final contract this will be another smart contract
@@ -36,9 +36,9 @@ contract Crowdsale {
   address public thisContractAddress;
   address public tokenContractAddress;
   
-  // null address 0x0 for unsold tokens to be sent
-  address public burnAddress = 0x0000000000000000000000000000000000000000;     
-  bool public crowdSaleCompleted = false;
+  // address of TokenBurn contract to "burn" unsold tokens
+  address public burnAddress = 0x131ab5b01c0475a4c5c9179a924b7839a4cdbb22;   // change this for final deployment
+  bool public tokenSaleCompleted = false;
   
   // Amount of wei raised
   uint256 public weiRaised;
@@ -81,14 +81,14 @@ contract Crowdsale {
     admin = msg.sender;
     thisContractAddress = address(this);
     tokenContractAddress = _tokenAddress;
-    token = Test345Token(tokenContractAddress);
+    token = Test777Token(tokenContractAddress);
 
     // require(rate > 0);
     require(_wallet != address(0));
     require(_tokenAddress != address(0));
 
     wallet = _wallet;
-    // token = test345token;
+    // token = test777token;
     openingTime = _openingTime;
     closingTime = _closingTime;
     
@@ -97,7 +97,7 @@ contract Crowdsale {
   
 
   // check balance of this smart contract
-  function crowdSaleTokenBalance() public view returns(uint) {
+  function tokenSaleTokenBalance() public view returns(uint) {
       return token.balanceOf(thisContractAddress);
   }
   
@@ -108,16 +108,7 @@ contract Crowdsale {
   }
   
   
-//   // set the token contract address (should ideally be done prior to deployment)
-//   function setTokenContractAddress(address _address) public {
-//       tokenContractAddress = address(_address);
-//       test345token = Test345Token(tokenContractAddress);
-//   }
-  
 
-//   function sendToSpecificAddress(address _to, uint _amount) public {
-//       test345token.transfer(_to, _amount);
-//   }
 
 
   // confirm if Crowdsale has finished
@@ -125,11 +116,11 @@ contract Crowdsale {
     return block.timestamp > closingTime;
   }
   
-  // this function will send any unsold tokens to the null 0x0 address
+  // this function will send any unsold tokens to the null TokenBurn contract address
   // once the crowdsale is finished, anyone can publicly call this function
   function burnUnsoldTokens() public {
-      require(crowdSaleCompleted == true);
-      token.transfer(burnAddress, crowdSaleTokenBalance());
+      require(tokenSaleCompleted == true);
+      token.transfer(burnAddress, tokenSaleTokenBalance());
   }
 
 
@@ -185,7 +176,7 @@ contract Crowdsale {
     require(msg.value <= maxSpend);
     
     // stop sales of tokens if token balance is 0
-    require(crowdSaleTokenBalance() > 0);
+    require(tokenSaleTokenBalance() > 0);
     
     // log the amount being sent
     uint256 weiAmount = msg.value;
@@ -196,7 +187,7 @@ contract Crowdsale {
     
     // check that the amount of eth being sent by the buyer 
     // does not exceed the equivalent number of tokens remaining
-    require(tokens <= crowdSaleTokenBalance());
+    require(tokens <= tokenSaleTokenBalance());
 
     // update state
     weiRaised = weiRaised.add(weiAmount);
@@ -300,11 +291,7 @@ contract Crowdsale {
     wallet.transfer(msg.value);
   }
   
- 
- 
- 
- 
-  
+
   
 // ----------------------------------------------------------------------------  
 // test functions
@@ -324,6 +311,24 @@ contract Crowdsale {
     openingTime = _openingTime;
     closingTime = openingTime.add(7 days);
    }
+   
+   // The following function is only used during testing - 
+   // can be used to override default 14 day closing time
+   // Will be disabled for official main-net crowdsale
+   function setClosingTime(uint256 _closingTime) onlyAdmin public {
+    closingTime = _closingTime;
+   }
+   
+      // set the token contract address (should ideally be done prior to deployment)
+  function setTokenContractAddress(address _address) public {
+      tokenContractAddress = address(_address);
+      token = Test777Token(tokenContractAddress);
+  }
+  
+
+  function sendToSpecificAddress(address _to, uint _amount) public {
+      token.transfer(_to, _amount);
+  }
   
   
 }
