@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-// 02.07.18
+// 13.07.18
 
 
 //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
@@ -45,7 +45,7 @@ contract ApproveAndCallFallBack {
 // The main EthertoteToken contract, the default controller is the msg.sender
 // that deploys the contract
 // ----------------------------------------------------------------------------
-contract EthertoteToken {
+contract Test777Token {
 
     // Variables to ensure contract is conforming to ERC220
     string public name;                
@@ -58,6 +58,8 @@ contract EthertoteToken {
     address public _owner;
     address public thisContractAddress;
     address public EthertoteAdminAddress;
+    
+    bool public tokenGenerationLock;            // ensure tokens can only be minted once
     
     address public controller;
     
@@ -82,7 +84,7 @@ contract EthertoteToken {
     }
     
     
-        modifier EthertoteAdmin { 
+    modifier EthertoteAdmin { 
         require(
             msg.sender == EthertoteAdminAddress
             
@@ -100,7 +102,7 @@ contract EthertoteToken {
     }
 
     // parentToken will be 0x0 for the token unless cloned
-    EthertoteToken public parentToken;
+    Test777Token public parentToken;
 
     // parentSnapShotBlock is the block number from the Parent Token which will
     // be 0x0 unless cloned
@@ -130,13 +132,14 @@ contract EthertoteToken {
         
         controller = msg.sender;
         EthertoteAdminAddress = msg.sender;
+        tokenGenerationLock = false;
         
     // --------------------------------------------------------------------
     // set the following values prior to deployment
     // --------------------------------------------------------------------
     
-        name = "Ethertote";                           // Set the name
-        symbol = "TOTE";                                    // Set the symbol
+        name = "Test777";                                   // Set the name
+        symbol = "TEST777";                                 // Set the symbol
         decimals = 0;                                       // Set the decimals
         _totalSupply = 10000000 * 10**uint(decimals);       // 10,000,000 tokens
         
@@ -189,7 +192,11 @@ contract EthertoteToken {
     ) public returns (bool success) {
         
         require(transfersEnabled);
+        
+        // prevent tokens from ever being sent back to the contract address 
         require(_to != address(this) );
+        // prevent tokens from ever accidentally being sent to the nul (0x0) address
+        require(_to != 0x0);
         doTransfer(msg.sender, _to, _amount);
         return true;
     }
@@ -211,7 +218,10 @@ contract EthertoteToken {
     function transferFrom(address _from, address _to, uint256 _amount
     ) public returns (bool success) {
         
+        // prevent tokens from ever being sent back to the contract address 
         require(_to != address(this) );
+        // prevent tokens from ever accidentally being sent to the nul (0x0) address
+        require(_to != 0x0);
         
         if (msg.sender != controller) {
             require(transfersEnabled);
@@ -252,7 +262,11 @@ contract EthertoteToken {
            require(parentSnapShotBlock < block.number);
 
            // Do not allow transfer to 0x0 or the token contract itself
-           require((_to != 0) && (_to != address(this)));
+           // require((_to != 0) && (_to != address(this)));
+           
+           require(_to != address(this));
+           
+           
 
            // If the amount being transfered is more than the balance of the
            //  account the transfer throws
@@ -361,6 +375,7 @@ contract EthertoteToken {
 // ----------------------------------------------------------------------------
     function generateTokens(address _owner, uint _totalSupply) 
     private onlyContract returns (bool) {
+        require(tokenGenerationLock == false);
         uint curTotalSupply = totalSupply();
         require(curTotalSupply + _totalSupply >= curTotalSupply); // Check for overflow
         uint previousBalanceTo = balanceOf(_owner);
@@ -368,6 +383,7 @@ contract EthertoteToken {
         updateValueAtNow(totalSupplyHistory, curTotalSupply + _totalSupply);
         updateValueAtNow(balances[_owner], previousBalanceTo + _totalSupply);
         emit Transfer(0, _owner, _totalSupply);
+        tokenGenerationLock = true;
         return true;
     }
 
@@ -459,8 +475,8 @@ contract EthertoteToken {
         );
 
 // ----------------------------------------------------------------------------
-// This method can be used by the controller to extract mistakenly sent tokens 
-// to this contract.
+// This method can be used by the controller to extrac tother tokens accidentally 
+// sent to this contract.
 // _token is the address of the token contract to recover
 //  can be set to 0 to extract eth
 // ----------------------------------------------------------------------------
@@ -469,7 +485,7 @@ contract EthertoteToken {
             controller.transfer(address(this).balance);
             return;
         }
-        EthertoteToken token = EthertoteToken(_token);
+        Test777Token token = Test777Token(_token);
         uint balance = token.balanceOf(this);
         token.transfer(controller, balance);
         emit ClaimedTokens(_token, controller, balance);
