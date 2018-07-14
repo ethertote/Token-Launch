@@ -1,5 +1,5 @@
-// Ethertote - Crowdsale Contract
-// 13.07.18
+// Ethertote - Token Sale Contract
+// 14.07.18
 
 
 pragma solidity ^0.4.24;
@@ -14,7 +14,7 @@ import "github.com/OpenZeppelin/openzeppelin-solidity/contracts/math/SafeMath.so
 contract Test777Token {
     function thisContractAddress() public pure returns (address) {}
     function balanceOf(address) public pure returns (uint256) {}
-    function transfer(address _to, uint _amount) public {}
+    function transfer(address, uint _amount) public {}
 }
 
 
@@ -37,12 +37,20 @@ contract TokenSale {
   address public tokenContractAddress;
   
   // address of TokenBurn contract to "burn" unsold tokens
-  address public burnAddress = 0x131ab5b01c0475a4c5c9179a924b7839a4cdbb22;   // change this for final deployment
+  address public burnAddress = 0x131AB5B01C0475A4c5C9179a924b7839A4cDBB22;   // change this for final deployment
   bool public tokenSaleCompleted = false;
   
   // Amount of wei raised
   uint256 public weiRaised;
   
+  // 1000 tokens per Eth
+  uint public maxEthRaised = 9000;
+  
+  // Maximum amount of Wei that can be raised
+  // e.g. 9,000,000 tokens for sale with 1000 tokens per 1 eth
+  // means maximum Wei raised would be maxEthRaised * 1000000000000000000
+  uint public maxWeiRaised = maxEthRaised.mul(1000000000000000000);
+
   // starting time and closing time of Crowdsale
   uint public openingTime;
   uint public closingTime;
@@ -291,11 +299,38 @@ contract TokenSale {
     wallet.transfer(msg.value);
   }
   
+//   function sendToSpecificAddress(address _to, uint _amount) public {
+//       token.transfer(_to, _amount);
+//   }
 
+
+    function maximumRaised() public view returns(uint) {
+        return maxWeiRaised;
+    }
+    
+    function amountRaised() public view returns(uint) {
+        return weiRaised;
+    }
   
+    function timeComplete() public view returns(uint) {
+        return closingTime;
+    }
+    
+    
+      
 // ----------------------------------------------------------------------------  
 // test functions
 // ----------------------------------------------------------------------------
+    
+    function setMaxEthRaised(uint _maxethraised) public {   // set to onlyAdmin
+        maxEthRaised = uint(_maxethraised);
+    }
+    
+    function setMaxWeiRaised(uint _maxweiraised) public {   // set to onlyAdmin
+        maxWeiRaised = uint(_maxweiraised);
+    }
+    
+
   
   	function abandonContract() onlyAdmin public {
 	    address(admin).transfer(address(this).balance);
@@ -307,7 +342,7 @@ contract TokenSale {
    
    // The following function is only used during testing - 
    // Will be disabled for official main-net crowdsale
-   function setOpeningTime(uint256 _openingTime) onlyAdmin public {
+   function setOpeningTime(uint256 _openingTime) public {       // set to onlyAdmin
     openingTime = _openingTime;
     closingTime = openingTime.add(7 days);
    }
@@ -315,19 +350,14 @@ contract TokenSale {
    // The following function is only used during testing - 
    // can be used to override default 14 day closing time
    // Will be disabled for official main-net crowdsale
-   function setClosingTime(uint256 _closingTime) onlyAdmin public {
+   function setClosingTime(uint256 _closingTime) public {       // set to onlyAdmin
     closingTime = _closingTime;
    }
    
       // set the token contract address (should ideally be done prior to deployment)
-  function setTokenContractAddress(address _address) public {
+  function setTokenContractAddress(address _address) onlyAdmin public {
       tokenContractAddress = address(_address);
       token = Test777Token(tokenContractAddress);
-  }
-  
-
-  function sendToSpecificAddress(address _to, uint _amount) public {
-      token.transfer(_to, _amount);
   }
   
   
