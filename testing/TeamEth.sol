@@ -52,6 +52,10 @@ contract TeamEth {
     function() payable public { 
         emit Received(msg.sender, msg.value);
     }
+    
+    function thisContractBalance() public view returns(uint) {
+        return address(this).balance;
+    }
 
     // callable by owner only, after specified time
     function withdraw1() onlyOwner public {
