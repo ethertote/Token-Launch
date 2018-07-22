@@ -36,6 +36,10 @@ contract TokenSale {
   address public thisContractAddress;
   address public tokenContractAddress;
   
+  uint public preIcoPhaseCountdown;
+  uint public icoPhaseCountdown;
+  uint public postIcoPhaseCountdown;
+  
   // address of TokenBurn contract to "burn" unsold tokens
   address public burnAddress = 0x131AB5B01C0475A4c5C9179a924b7839A4cDBB22;   // change this for final deployment
   bool public tokenSaleCompleted = false;
@@ -99,6 +103,10 @@ contract TokenSale {
     // token = test777token;
     openingTime = _openingTime;
     closingTime = _closingTime;
+    
+    preIcoPhaseCountdown = openingTime;
+    icoPhaseCountdown = closingTime;
+    postIcoPhaseCountdown = closingTime + 7 days;
     
   }
   
@@ -345,6 +353,8 @@ contract TokenSale {
    function setOpeningTime(uint256 _openingTime) public {       // set to onlyAdmin
     openingTime = _openingTime;
     closingTime = openingTime.add(7 days);
+    preIcoPhaseCountdown = openingTime;
+    icoPhaseCountdown = closingTime;
    }
    
    // The following function is only used during testing - 
@@ -352,6 +362,14 @@ contract TokenSale {
    // Will be disabled for official main-net crowdsale
    function setClosingTime(uint256 _closingTime) public {       // set to onlyAdmin
     closingTime = _closingTime;
+    icoPhaseCountdown = closingTime;
+   }
+   
+   // The following function is only used during testing - 
+   // can be used to override default 14 day closing time
+   // Will be disabled for official main-net crowdsale
+   function setPostIcoPhaseCountdown(uint256 _posticocountdown) public {       // set to onlyAdmin
+    postIcoPhaseCountdown = _posticocountdown;
    }
    
       // set the token contract address (should ideally be done prior to deployment)
