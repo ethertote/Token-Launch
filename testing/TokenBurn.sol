@@ -2,7 +2,7 @@
 
 
 // -----------------------------------------------------------------------------
-// The following contract allows unsold tokens as part of the crowdsale
+// The following contract allows unsold tokens as part of the token sale
 // to be permantnely locked ("burned") so that nobody is able to retrieve them
 
 // This is achieved by passing ownership of the contract to a null address (0x0)
@@ -12,9 +12,10 @@
 // and the Ethertote team will not be able to retrieve any Eth or tokens sent
 // to this contract.
 
-// We decided to use this smart contract in favour of allowing tokens to ever 
+// We decided to use this smart contract in favour of allowing tokens to 
 // be sent to the null account of 0x0, as this prevents anyone from ever 
-// accidentally sending their own tokens to 0x0
+// accidentally sending their own TOTE tokens to 0x0. IF they did this
+// accidentally it would throw and the tokens would not be sent there.
 
 // The ERC20 compliant transfer() and transferFrom() function prevent any tokens
 // from ever being sent to 0x0
@@ -44,9 +45,7 @@ contract TokenBurn {
         admin = newOwner;
     }
     
-    
     // FALLBACK - allows Eth and tokens to be sent to this address
     function () private payable {}
   
-    
 }
