@@ -35,9 +35,17 @@ contract TeamEth {
     
     // percentage that the team can withdraw Eth
     // it can naturally be inferred that quarter4 will be 25%
-    uint public quarter1 = 25;
-    uint public quarter2 = 25;
-    uint public quarter3 = 25;
+    uint public percentageQuarter1 = 25;
+    uint public percentageQuarter2 = 25;
+    uint public percentageQuarter3 = 25;
+    
+    // 100%
+    uint public hundredPercent = 100;
+    
+    // calculating the number used as the divider
+    uint public quarter1 = hundredPercent.div(percentageQuarter1);
+    uint public quarter2 = hundredPercent.div(percentageQuarter2);
+    uint public quarter3 = hundredPercent.div(percentageQuarter3);
 
     event Received(address from, uint256 amount);
     event Withdrew(address to, uint256 amount);
