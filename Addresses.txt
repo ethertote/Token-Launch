@@ -2,3 +2,4 @@ EthertoteToken contract address - 0x42be9831fff77972c1d0e1ec0aa9bdb3caa04d47
 TokenBurn address - 0xadca18dc9489c5fe5bddf1a8a8c2623b66029198
 TeamEth address - 0x67ed24a0db2ae01c4841cd8aef1da519b588e2b2
 EthRaised address - 0x9f73d808807c71af185fea0c1ce205002c74123c
+TokenSale address - 0x202f291e30fe4aa626792ae01c35eaf7153b44b9
