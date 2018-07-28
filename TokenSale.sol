@@ -1,6 +1,12 @@
-
-// Ethertote - Token Sale Contract
-// 27.07.18
+// Ethertote - Official Token Sale Contract
+// 28.07.18
+//
+// Any unsold tokens can be sent directly to the TokenBurn Contract
+// by anyone once the Token Sale is complete - 
+// this is a PUBLIC function that anyone can call!!
+//
+// All Eth raised during the token sale is automatically sent to the 
+// EthRaised smart contract for distribution
 
 
 pragma solidity ^0.4.24;
@@ -78,11 +84,9 @@ contract TokenSale {
 
   address public admin;
   address public thisContractAddress;
-  address public tokenContractAddress;
-  
-  uint public preIcoPhaseCountdown;       // used for website tokensale
-  uint public icoPhaseCountdown;          // used for website tokensale
-  uint public postIcoPhaseCountdown;      // used for website tokensale
+
+  // address of the TOTE token original smart contract
+  address public tokenContractAddress = 0x42be9831FFF77972c1D0E1eC0aA9bdb3CaA04D47;
   
   // address of TokenBurn contract to "burn" unsold tokens
   // for further details, review the TokenBurn contract and verify code on Etherscan
@@ -90,20 +94,24 @@ contract TokenSale {
   
   // address of EthRaised contract, that will be used to distribute funds 
   // raised by the token sale. Added as "wallet address"
-  address public ethRaisedAddress = 0xdcEcF412C14b50dC033A37c14728bb7Bbb152159;
+  address public ethRaisedAddress = 0x9F73D808807c71Af185FEA0c1cE205002c74123C;
   
-  // confirm token sale has completed
-  bool public tokenSaleCompleted;
+  uint public preIcoPhaseCountdown;       // used for website tokensale
+  uint public icoPhaseCountdown;          // used for website tokensale
+  uint public postIcoPhaseCountdown;      // used for website tokensale
   
-  // pause tokensale in an emergency
-  bool public tokenSalePaused;
+  // pause token sale in an emergency [true/false]
+  bool public tokenSaleIsPaused;
   
-  // note pause time to allow special function to extend closingTime
+  // note the pause time to allow special function to extend closingTime
   uint public tokenSalePausedTime;
   
-  // time that needs to be added on to the closing time in the event of 
-  // an emergency pause of the token sale
-  uint public tokenSaleTimeExtender;
+  // note the resume time 
+  uint public tokenSaleResumedTime;
+  
+  // The time (in seconds) that needs to be added on to the closing time 
+  // in the event of an emergency pause of the token sale
+  uint public tokenSalePausedDuration;
   
   // Amount of wei raised
   uint256 public weiRaised;
@@ -117,8 +125,9 @@ contract TokenSale {
   uint public maxWeiRaised = maxEthRaised.mul(1000000000000000000);
 
   // starting time and closing time of Crowdsale
-  uint public openingTime;
-  uint public closingTime;
+  // scheduled start on Monday, August 27th 2018 at 5:00pm GMT+1
+  uint public openingTime = 1535385600;
+  uint public closingTime = openingTime.add(7 days);
   
   // used as a divider so that 1 eth will buy 1000 tokens
   // set rate to 1,000,000,000,000,000
@@ -136,7 +145,11 @@ contract TokenSale {
         _; 
   }
   
-  
+  // EVENTS
+  event Deployed(string, uint);
+  event SalePaused(string, uint);
+  event SaleResumed(string, uint);
+  event TokensBurned(string, uint);
   
  // ---------------------------------------------------------------------------
  // Constructor function
@@ -144,90 +157,99 @@ contract TokenSale {
  // _tokenContractAddress = Address of the original token contract being sold
  // ---------------------------------------------------------------------------
  
-  constructor(
-      address _ethRaisedAddress, 
-      address _tokenContractAddress, 
-      address _burnAddress,
-      uint _openingTime, 
-      uint _closingTime
-      ) public {
+  constructor() public {
     
     admin = msg.sender;
     thisContractAddress = address(this);
-    tokenBurnAddress = _burnAddress;
-    tokenContractAddress = _tokenContractAddress;
+
     token = EthertoteToken(tokenContractAddress);
-
-    // require(rate > 0);
-    require(_ethRaisedAddress != address(0));
-    require(_tokenContractAddress != address(0));
-
-    ethRaisedAddress = _ethRaisedAddress;
-    openingTime = _openingTime;
-    closingTime = _closingTime;
     
+
+    require(ethRaisedAddress != address(0));
+    require(tokenContractAddress != address(0));
+    require(tokenBurnAddress != address(0));
+
     preIcoPhaseCountdown = openingTime;
     icoPhaseCountdown = closingTime;
     
-    // after 28 days the post-token-sale section of the website will be removed based on this time
-    postIcoPhaseCountdown = closingTime + 28 days;
+    // after 14 days the "post-tokensale" header section of the homepage 
+    // on the website will be removed based on this time
+    postIcoPhaseCountdown = closingTime.add(14 days);
     
+    emit Deployed("Ethertote Token Sale contract deployed", now);
   }
+  
+  
   
   // check balance of this smart contract
   function tokenSaleTokenBalance() public view returns(uint) {
       return token.balanceOf(thisContractAddress);
   }
   
-  
   // check the token balance of any ethereum address  
   function getAnyAddressTokenBalance(address _address) public view returns(uint) {
       return token.balanceOf(_address);
   }
   
-
   // confirm if The Token Sale has finished
-  function crowdsaleHasClosed() public view returns (bool) {
-    return block.timestamp > closingTime;
+  function tokenSaleHasFinished() public view returns (bool) {
+    return now > closingTime;
   }
   
   // this function will send any unsold tokens to the null TokenBurn contract address
   // once the crowdsale is finished, anyone can publicly call this function!
   function burnUnsoldTokens() public {
-      require(tokenSaleCompleted == true);
+      require(tokenSaleIsPaused == false);
+      require(tokenSaleHasFinished() == true);
       token.transfer(tokenBurnAddress, tokenSaleTokenBalance());
+      emit TokensBurned("tokens sent to TokenBurn contract", now);
   }
+
+
 
   // function to temporarily pause token sale if needed
   function pauseTokenSale() onlyAdmin public {
       // confirm the token sale hasn't already completed
-      require(tokenSaleCompleted == false);
+      require(tokenSaleHasFinished() == false);
+      
+      // confirm the token sale isn't already paused
+      require(tokenSaleIsPaused == false);
       
       // pause the sale and note the time of the pause
-      tokenSalePaused = true;
+      tokenSaleIsPaused = true;
       tokenSalePausedTime = now;
-      
-      // now calculate the difference in time between the pause time
-      // and what woud've been the later closing time
-      
-      // Note: if the token sale was paused when the sale was live and was
-      // paused before the sale ended, then the value of tokenSalePausedTime
-      // will always be less than the value of closingTime
-      
-      tokenSaleTimeExtender = closingTime.sub(tokenSalePausedTime);
+      emit SalePaused("token sale has been paused", now);
   }
   
     // function to resume token sale
   function resumeTokenSale() onlyAdmin public {
-      closingTime = closingTime.add(tokenSaleTimeExtender);
+      
+      // confirm the token sale is currently paused
+      require(tokenSaleIsPaused == true);
+      
+      tokenSaleResumedTime = now;
+      
+      // now calculate the difference in time between the pause time
+      // and the resume time, to establish how long the sale was
+      // paused for. This time now needs to be added to the closingTime.
+      
+      // Note: if the token sale was paused whilst the sale was live and was
+      // paused before the sale ended, then the value of tokenSalePausedTime
+      // will always be less than the value of tokenSaleResumedTime
+      
+      tokenSalePausedDuration = tokenSaleResumedTime.sub(tokenSalePausedTime);
+      
+      // add the total pause time to the closing time.
+      
+      closingTime = closingTime.add(tokenSalePausedDuration);
       
       // extend post ICO countdown for the web-site
-      postIcoPhaseCountdown = closingTime + 28 days;
-      tokenSalePaused = false;
+      postIcoPhaseCountdown = closingTime.add(14 days);
+      // now resume the token sale
+      tokenSaleIsPaused = false;
+      emit SaleResumed("token sale has now resumed", now);
   }
   
-
-    
 
 // ----------------------------------------------------------------------------
 // Event for token purchase logging
@@ -282,7 +304,7 @@ contract TokenSale {
     require(tokenSaleTokenBalance() > 0);
     
     // stop sales of tokens if Token sale is paused
-    require(tokenSalePaused == false);
+    require(tokenSaleIsPaused == false);
     
     // log the amount being sent
     uint256 weiAmount = msg.value;
@@ -413,55 +435,14 @@ contract TokenSale {
         return closingTime;
     }
     
-    
-      
-// ----------------------------------------------------------------------------  
-// test functions - not used for final contract
-// ----------------------------------------------------------------------------
-    
-    function abandonContract() onlyAdmin public {
-	    address(admin).transfer(address(this).balance);
-	  }
-    
-    function setMaxEthRaised(uint _maxethraised) onlyAdmin public {  
-        maxEthRaised = uint(_maxethraised);
-    }
-    
-    function setMaxWeiRaised(uint _maxweiraised) onlyAdmin public {
-        maxWeiRaised = uint(_maxweiraised);
-    }
-    
-    function setRate(uint _value) onlyAdmin public {
-      rate = uint(_value);
-  }
-   
-  function setOpeningTime(uint256 _openingTime) onlyAdmin public {  
+    // special function to delay the token sale if necessary
+    function delayOpeningTime(uint256 _openingTime) onlyAdmin public {  
     openingTime = _openingTime;
     closingTime = openingTime.add(7 days);
     preIcoPhaseCountdown = openingTime;
     icoPhaseCountdown = closingTime;
-  }
-   
-  function setClosingTime(uint256 _closingTime) onlyAdmin public { 
-    closingTime = _closingTime;
-    icoPhaseCountdown = closingTime;
-  }
-   
-  function setPostIcoPhaseCountdown(uint256 _posticocountdown) onlyAdmin public { 
-    postIcoPhaseCountdown = _posticocountdown;
-  }
-   
-  function setTokenContractAddress(address _address) onlyAdmin public {
-      tokenContractAddress = address(_address);
-      token = EthertoteToken(tokenContractAddress);
-  }
-  
-  function setTokenBurnAddress(address _address) onlyAdmin public {
-      tokenBurnAddress = address(_address);
-  }
-  
-  function setEthRaisedAddress(address _address) onlyAdmin public {
-      ethRaisedAddress = address(_address);
-  }
+    postIcoPhaseCountdown = closingTime.add(14 days);
+    }
+    
   
 }
