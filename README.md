@@ -1,3 +1,3 @@
 # Ethertote Token Launch
 
-scheduled for 27/08/2018
+scheduled for 03/09/2018
